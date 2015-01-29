@@ -17,6 +17,23 @@
  */
 package org.azkfw.business.test;
 
+import java.io.InputStream;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import junit.framework.TestCase;
+
+import org.azkfw.datasource.Datasource;
+import org.azkfw.datasource.Field;
+import org.azkfw.datasource.Record;
+import org.azkfw.datasource.Table;
+import org.azkfw.datasource.excel.ExcelDatasourceFactory;
+import org.azkfw.util.StringUtility;
+
 /**
  * このクラスは、ビジネス機能をサポートしたタスククラスです。
  * 
@@ -26,15 +43,212 @@ package org.azkfw.business.test;
  */
 public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 
+	private static Class<? extends TestCase> TEST_CLASS = null;
+	private static Datasource INIT_DATASOURCE = null;
+	private static Datasource TEST_DATASOURCE = null;
+	private static Map<String, Datasource> CASH_DATASOURCES = new HashMap<String, Datasource>();
+
 	@Override
 	public void setUp() {
 		super.setUp();
 
+		if (null == TEST_CLASS || !TEST_CLASS.equals(this.getClass())) {
+			TEST_CLASS = this.getClass();
+
+			// Load init datasource
+			InitDatasourceFile id = TEST_CLASS.getAnnotation(InitDatasourceFile.class);
+			if (null != id && StringUtility.isNotEmpty(id.value())) {
+				Datasource ds = null;
+				if (CASH_DATASOURCES.containsKey(id.value())) {
+					debug(String.format("Use cash datasource.[%s]", id.value()));
+					ds = CASH_DATASOURCES.get(id.value());
+				} else {
+					ds = loadDatasource(id.value());
+					CASH_DATASOURCES.put(id.value(), ds);
+				}
+				INIT_DATASOURCE = ds;
+			}
+			// Store init datasource
+			if (null != INIT_DATASOURCE) {
+				storeDatabase(INIT_DATASOURCE);
+			}
+
+			// Load test datasource
+			TestDatasourceFile td = TEST_CLASS.getAnnotation(TestDatasourceFile.class);
+			if (null != td && StringUtility.isNotEmpty(td.value())) {
+				Datasource ds = null;
+				if (CASH_DATASOURCES.containsKey(td.value())) {
+					debug(String.format("Use cash datasource.[%s]", td.value()));
+					ds = CASH_DATASOURCES.get(td.value());
+				} else {
+					ds = loadDatasource(td.value());
+					CASH_DATASOURCES.put(td.value(), ds);
+				}
+				TEST_DATASOURCE = ds;
+			}
+		}
+
+		// Store test datasource
+		if (null != TEST_DATASOURCE) {
+			storeDatabase(TEST_DATASOURCE);
+		}
+	}
+
+	private Datasource loadDatasource(final String name) {
+		info(String.format("Load datasource.[%s]", name));
+		Datasource ds = null;
+		try {
+			InputStream is = getTestContext().getResourceAsStream(name);
+			if (null != is) {
+				ds = ExcelDatasourceFactory.generate(name, is);
+			} else {
+				fatal(String.format("Not found datasource file.[%s]", name));
+				fail(String.format("Not found datasource file.[%s]", name));
+			}
+		} catch (Exception ex) {
+			fatal(ex);
+			fail(String.format("Datasource load error.[%s]", name));
+		}
+		return ds;
+	}
+
+	private void storeDatabase(final Datasource datasource) {
+		Connection connection = null;
+		PreparedStatement ps = null;
+		try {
+			connection = getConnection();
+
+			List<Table> tables = datasource.getTables();
+			// delete
+			for (int i = 0; i < tables.size(); i++) {
+				Table table = tables.get(i);
+				ps = connection.prepareStatement(getDeleteSQL(table));
+				int size = ps.executeUpdate();
+				info(String.format("Table delete data.[%s, %d]", table.getName(), size));
+				ps.close();
+				ps = null;
+			}
+			// insert
+			for (int i = tables.size() - 1; i >= 0; i--) {
+				Table table = tables.get(i);
+				ps = connection.prepareStatement(getInsertSQL(table));
+				int index = 1;
+				List<Field> fields = table.getFields();
+				List<Record> records = table.getRecords();
+				for (int j = 0; j < records.size(); j++) {
+					Record record = records.get(j);
+					for (int k = 0; k < fields.size(); k++) {
+						Field field = fields.get(k);
+						ps.setObject(index, record.get(field.getName()));
+						index++;
+					}
+				}
+				int size = ps.executeUpdate();
+				info(String.format("Table insert data.[%s, %d]", table.getName(), size));
+				ps.close();
+				ps = null;
+			}
+
+			connection.commit();
+
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			fail("Datasource store error.");
+		} finally {
+			if (null != ps) {
+				try {
+					ps.close();
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			}
+			if (null != connection) {
+				try {
+					connection.close();
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private String getDeleteSQL(final Table table) {
+		return String.format("DELETE FROM %s;", table.getName());
+	}
+
+	private String getInsertSQL(final Table table) {
+		List<Field> fields = table.getFields();
+
+		StringBuilder values = new StringBuilder();
+		values.append("(");
+		for (int j = 0; j < fields.size(); j++) {
+			if (0 != j) {
+				values.append(", ");
+			}
+			values.append("?");
+		}
+		values.append(")");
+
+		StringBuilder sql = new StringBuilder();
+		sql.append("INSERT INTO ");
+		sql.append(table.getName());
+		sql.append("(");
+		for (int i = 0; i < fields.size(); i++) {
+			Field field = fields.get(i);
+			if (0 != i) {
+				sql.append(", ");
+			}
+			sql.append(field.getName());
+		}
+		sql.append(") VALUES ");
+
+		for (int i = 0; i < table.getRecords().size(); i++) {
+			if (0 != i) {
+				sql.append(", ");
+			}
+			sql.append(values.toString());
+		}
+		return sql.toString();
 	}
 
 	@Override
 	public void tearDown() {
 
 		super.tearDown();
+	}
+
+	public static void assertEquals(final Datasource expected, final Datasource actual) {
+		assertEquals(null, expected, actual, null);
+	}
+
+	public static void assertEquals(final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
+		assertEquals(null, expected, actual, option);
+	}
+
+	public static void assertEquals(final String message, final Datasource expected, final Datasource actual) {
+		assertEquals(message, expected, actual, null);
+	}
+
+	public static void assertEquals(final String message, final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
+		List<Table> expTables = expected.getTables();
+		List<Table> actTables = actual.getTables();
+		for (Table expTable : expTables) {
+			Table actTable = null;
+			for (Table tbl : actTables) {
+				if (expTable.getName().equals(tbl.getName())) {
+					actTable = tbl;
+					break;
+				}
+			}
+			if (null == actTable) {
+				fail(String.format("Not found table.[%s]", expTable.getName()));
+			}
+			assertEquals(message, expTable, actTable, option);
+		}
+
+	}
+
+	public static void assertEquals(final String message, final Table expected, final Table actual, final DatasourceAssertOption option) {
+
 	}
 }

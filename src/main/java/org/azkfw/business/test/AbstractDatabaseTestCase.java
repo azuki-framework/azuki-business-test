@@ -19,7 +19,9 @@ package org.azkfw.business.test;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -36,7 +38,7 @@ import org.azkfw.test.AbstractPersistenceTestCase;
 public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCase {
 
 	private static ConnectionFactory factory;
-	private Connection connection;
+	private Set<Connection> connections;
 
 	@Override
 	public void setUp() {
@@ -46,36 +48,56 @@ public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCa
 			try {
 				factory = ConnectionFactory.getInstance(getDatasourceProperties());
 			} catch (Exception ex) {
+				ex.printStackTrace();
 				fail("Database error.");
 			}
 		}
+
+		connections = new HashSet<Connection>();
 	}
 
 	@Override
 	public void tearDown() {
-		if (null != connection) {
+		for (Connection connection : connections) {
 			try {
-				connection.close();
+				if (!connection.isClosed()) {
+					connection.close();
+				}
 			} catch (SQLException ex) {
 				ex.printStackTrace();
 			}
-			connection = null;
 		}
 
 		super.tearDown();
 	}
 
 	protected final Connection getConnection() {
+		Connection connection = null;
 		try {
-			if (null == connection) {
-				connection = factory.getConnection();
-				connection.setAutoCommit(false);
-			}
+			connection = factory.getConnection();
+			connection.setAutoCommit(false);
+			connections.add(connection);
 		} catch (SQLException ex) {
 			ex.printStackTrace();
-			fail("Database error.");
+			fail("Connection create error.");
 		}
 		return connection;
+	}
+	
+	protected final void releaseConnection(final Connection connection) {
+		if (null != connection) {
+			if (connections.contains(connection)) {
+				try {
+				if (connection.isClosed()) {
+					connection.close();
+				}
+				}catch (SQLException ex) {
+					ex.printStackTrace();
+					fail("Connection release error.");
+				}
+				connections.remove(connection);
+			}
+		}
 	}
 
 	protected Properties getDatasourceProperties() {

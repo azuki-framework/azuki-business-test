@@ -40,6 +40,12 @@
 			<artifactId>azuki-business</artifactId>
 			<version>1.4.4</version>
 		</dependency>
+
+		<dependency>
+			<groupId>org.azkfw</groupId>
+			<artifactId>azuki-datasource</artifactId>
+			<version>1.4.4</version>
+		</dependency>
 		
 		<dependency>
 			<groupId>org.azkfw</groupId>
