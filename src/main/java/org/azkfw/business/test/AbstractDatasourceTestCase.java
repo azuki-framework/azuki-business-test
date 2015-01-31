@@ -63,7 +63,7 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 					debug(String.format("Use cash datasource.[%s]", id.value()));
 					ds = CASH_DATASOURCES.get(id.value());
 				} else {
-					ds = loadDatasource(id.value());
+					ds = getTestFileToDatasource(id.value());
 					CASH_DATASOURCES.put(id.value(), ds);
 				}
 				INIT_DATASOURCE = ds;
@@ -81,7 +81,7 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 					debug(String.format("Use cash datasource.[%s]", td.value()));
 					ds = CASH_DATASOURCES.get(td.value());
 				} else {
-					ds = loadDatasource(td.value());
+					ds = getTestFileToDatasource(td.value());
 					CASH_DATASOURCES.put(td.value(), ds);
 				}
 				TEST_DATASOURCE = ds;
@@ -94,8 +94,19 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 		}
 	}
 
-	private Datasource loadDatasource(final String name) {
-		info(String.format("Load datasource.[%s]", name));
+	@Override
+	public void tearDown() {
+
+		super.tearDown();
+	}
+
+	/**
+	 * テストファイルをデータソースとして取得する。
+	 * 
+	 * @param name 名前
+	 * @return データソース
+	 */
+	protected final Datasource getTestFileToDatasource(final String name) {
 		Datasource ds = null;
 		try {
 			InputStream is = getTestContext().getResourceAsStream(name);
@@ -110,6 +121,76 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 			fail(String.format("Datasource load error.[%s]", name));
 		}
 		return ds;
+	}
+
+	/**
+	 * データソースの内容を比較する。
+	 * 
+	 * @param expected 期待値
+	 * @param actual 現行値
+	 */
+	public static void assertEquals(final Datasource expected, final Datasource actual) {
+		assertEquals(null, expected, actual, null);
+	}
+
+	/**
+	 * データソースの内容を比較する。
+	 * 
+	 * @param expected 期待値
+	 * @param actual 現行値
+	 * @param option 比較オプション
+	 */
+	public static void assertEquals(final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
+		assertEquals(null, expected, actual, option);
+	}
+
+	/**
+	 * データソースの内容を比較する。
+	 * 
+	 * @param message メッセージ
+	 * @param expected 期待値
+	 * @param actual 現行値
+	 */
+	public static void assertEquals(final String message, final Datasource expected, final Datasource actual) {
+		assertEquals(message, expected, actual, null);
+	}
+
+	/**
+	 * データソースの内容を比較する。
+	 * 
+	 * @param message メッセージ
+	 * @param expected 期待値
+	 * @param actual 現行値
+	 * @param option 比較オプション
+	 */
+	public static void assertEquals(final String message, final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
+		List<Table> expTables = expected.getTables();
+		List<Table> actTables = actual.getTables();
+		for (Table expTable : expTables) {
+			Table actTable = null;
+			for (Table tbl : actTables) {
+				if (expTable.getName().equals(tbl.getName())) {
+					actTable = tbl;
+					break;
+				}
+			}
+			if (null == actTable) {
+				fail(String.format("Not found table.[%s]", expTable.getName()));
+			}
+			assertEquals(message, expTable, actTable, option);
+		}
+	}
+
+	/**
+	 * テーブルの内容を比較する。
+	 * 
+	 * @param message メッセージ
+	 * @param expected 期待値
+	 * @param actual 現行値
+	 * @param option 比較オプション
+	 */
+	public static void assertEquals(final String message, final Table expected, final Table actual, final DatasourceAssertOption option) {
+		// TODO: テーブル比較処理
 	}
 
 	private void storeDatabase(final Datasource datasource) {
@@ -209,46 +290,5 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 			sql.append(values.toString());
 		}
 		return sql.toString();
-	}
-
-	@Override
-	public void tearDown() {
-
-		super.tearDown();
-	}
-
-	public static void assertEquals(final Datasource expected, final Datasource actual) {
-		assertEquals(null, expected, actual, null);
-	}
-
-	public static void assertEquals(final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
-		assertEquals(null, expected, actual, option);
-	}
-
-	public static void assertEquals(final String message, final Datasource expected, final Datasource actual) {
-		assertEquals(message, expected, actual, null);
-	}
-
-	public static void assertEquals(final String message, final Datasource expected, final Datasource actual, final DatasourceAssertOption option) {
-		List<Table> expTables = expected.getTables();
-		List<Table> actTables = actual.getTables();
-		for (Table expTable : expTables) {
-			Table actTable = null;
-			for (Table tbl : actTables) {
-				if (expTable.getName().equals(tbl.getName())) {
-					actTable = tbl;
-					break;
-				}
-			}
-			if (null == actTable) {
-				fail(String.format("Not found table.[%s]", expTable.getName()));
-			}
-			assertEquals(message, expTable, actTable, option);
-		}
-
-	}
-
-	public static void assertEquals(final String message, final Table expected, final Table actual, final DatasourceAssertOption option) {
-
 	}
 }

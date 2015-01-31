@@ -71,35 +71,14 @@ public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCa
 		super.tearDown();
 	}
 
-	protected final Connection getConnection() {
-		Connection connection = null;
-		try {
-			connection = factory.getConnection();
-			connection.setAutoCommit(false);
-			connections.add(connection);
-		} catch (SQLException ex) {
-			ex.printStackTrace();
-			fail("Connection create error.");
-		}
-		return connection;
-	}
-	
-	protected final void releaseConnection(final Connection connection) {
-		if (null != connection) {
-			if (connections.contains(connection)) {
-				try {
-				if (connection.isClosed()) {
-					connection.close();
-				}
-				}catch (SQLException ex) {
-					ex.printStackTrace();
-					fail("Connection release error.");
-				}
-				connections.remove(connection);
-			}
-		}
-	}
-
+	/**
+	 * データソース設定を取得する。
+	 * <p>
+	 * データソース設定を変更する場合、このメソッドをオーバーライドする。
+	 * </p>
+	 * 
+	 * @return データソース設定
+	 */
 	protected Properties getDatasourceProperties() {
 		Properties p = new Properties();
 		p.setProperty("driverClassName", "");
@@ -113,6 +92,45 @@ public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCa
 		p.setProperty("maxWait", "5000");
 		p.setProperty("validationQuery", "select 1");
 		return p;
+	}
+
+	/**
+	 * データベースコネクションを取得する。
+	 * 
+	 * @return コネクション
+	 */
+	protected final Connection getConnection() {
+		Connection connection = null;
+		try {
+			connection = factory.getConnection();
+			connection.setAutoCommit(false);
+			connections.add(connection);
+		} catch (SQLException ex) {
+			ex.printStackTrace();
+			fail("Connection create error.");
+		}
+		return connection;
+	}
+
+	/**
+	 * データベースコネクションを返却する。
+	 * 
+	 * @param connection コネクション
+	 */
+	protected final void releaseConnection(final Connection connection) {
+		if (null != connection) {
+			if (connections.contains(connection)) {
+				try {
+					if (connection.isClosed()) {
+						connection.close();
+					}
+				} catch (SQLException ex) {
+					ex.printStackTrace();
+					fail("Connection release error.");
+				}
+				connections.remove(connection);
+			}
+		}
 	}
 
 	private static abstract class ConnectionFactory {
