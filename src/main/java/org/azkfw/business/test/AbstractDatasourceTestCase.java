@@ -212,22 +212,24 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 			// insert
 			for (int i = tables.size() - 1; i >= 0; i--) {
 				Table table = tables.get(i);
-				ps = connection.prepareStatement(getInsertSQL(table));
-				int index = 1;
 				List<Field> fields = table.getFields();
 				List<Record> records = table.getRecords();
-				for (int j = 0; j < records.size(); j++) {
-					Record record = records.get(j);
-					for (int k = 0; k < fields.size(); k++) {
-						Field field = fields.get(k);
-						ps.setObject(index, record.get(field.getName()));
-						index++;
+				if (0 < records.size()) {
+					ps = connection.prepareStatement(getInsertSQL(table));
+					int index = 1;
+					for (int j = 0; j < records.size(); j++) {
+						Record record = records.get(j);
+						for (int k = 0; k < fields.size(); k++) {
+							Field field = fields.get(k);
+							ps.setObject(index, record.get(field.getName()));
+							index++;
+						}
 					}
+					int size = ps.executeUpdate();
+					info(String.format("Table insert data.[%s, %d]", table.getName(), size));
+					ps.close();
+					ps = null;
 				}
-				int size = ps.executeUpdate();
-				info(String.format("Table insert data.[%s, %d]", table.getName(), size));
-				ps.close();
-				ps = null;
 			}
 
 			connection.commit();
