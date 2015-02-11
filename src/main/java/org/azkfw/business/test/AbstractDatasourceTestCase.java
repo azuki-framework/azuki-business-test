@@ -19,8 +19,10 @@ package org.azkfw.business.test;
 
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,6 +31,7 @@ import junit.framework.TestCase;
 
 import org.azkfw.datasource.Datasource;
 import org.azkfw.datasource.Field;
+import org.azkfw.datasource.FieldType;
 import org.azkfw.datasource.Record;
 import org.azkfw.datasource.Table;
 import org.azkfw.datasource.excel.ExcelDatasourceFactory;
@@ -221,7 +224,21 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 						Record record = records.get(j);
 						for (int k = 0; k < fields.size(); k++) {
 							Field field = fields.get(k);
-							ps.setObject(index, record.get(field.getName()));
+							Object value = record.get(field.getName());
+							if (null == value) {
+								ps.setObject(index, value);
+							} else if (FieldType.Date == field.getType()) {
+								Date date = null;
+								if (value instanceof Date) {
+									value = date;
+								} else if (value instanceof java.util.Date) {
+									Timestamp ts = new Timestamp( ((java.util.Date)value).getTime() );
+									date = new Date(ts.getTime());
+								}
+								ps.setObject(index, date);
+							} else {
+								ps.setObject(index, value);
+							}
 							index++;
 						}
 					}
