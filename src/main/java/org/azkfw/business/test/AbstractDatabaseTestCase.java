@@ -26,6 +26,9 @@ import java.util.Set;
 import javax.sql.DataSource;
 
 import org.apache.commons.dbcp.BasicDataSourceFactory;
+import org.azkfw.database.definition.model.DatabaseModel;
+import org.azkfw.database.definition.model.TableModel;
+import org.azkfw.database.definition.parser.PostgreSQLDefinitionParser;
 import org.azkfw.test.AbstractPersistenceTestCase;
 
 /**
@@ -39,6 +42,8 @@ public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCa
 
 	private static ConnectionFactory factory;
 	private Set<Connection> connections;
+
+	private static DatabaseModel DATABASE_MODEL;
 
 	@Override
 	public void setUp() {
@@ -54,6 +59,25 @@ public abstract class AbstractDatabaseTestCase extends AbstractPersistenceTestCa
 		}
 
 		connections = new HashSet<Connection>();
+
+		if (null == DATABASE_MODEL) {
+			Connection connection = null;
+			try {
+				connection = getConnection();
+
+				PostgreSQLDefinitionParser parser = new PostgreSQLDefinitionParser();
+				DATABASE_MODEL = parser.parse(connection);
+
+				for (TableModel table : DATABASE_MODEL.getTables()) {
+					System.out.println(table.getName());
+				}
+			} catch (SQLException ex) {
+				ex.printStackTrace();
+				fail("Database error.");
+			} finally {
+				releaseConnection(connection);
+			}
+		}
 	}
 
 	@Override

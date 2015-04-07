@@ -38,7 +38,7 @@ import org.azkfw.datasource.excel.ExcelDatasourceFactory;
 import org.azkfw.util.StringUtility;
 
 /**
- * このクラスは、ビジネス機能をサポートしたタスククラスです。
+ * このクラスは、データソース機能をサポートしたテストクラスです。
  * 
  * @since 1.0.0
  * @version 1.0.0 2015/01/27
@@ -194,6 +194,7 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 	 */
 	public static void assertEquals(final String message, final Table expected, final Table actual, final DatasourceAssertOption option) {
 		// TODO: テーブル比較処理
+
 	}
 
 	private void storeDatabase(final Datasource datasource) {
@@ -232,7 +233,7 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 								if (value instanceof Date) {
 									value = date;
 								} else if (value instanceof java.util.Date) {
-									Timestamp ts = new Timestamp( ((java.util.Date)value).getTime() );
+									Timestamp ts = new Timestamp(((java.util.Date) value).getTime());
 									date = new Date(ts.getTime());
 								}
 								ps.setObject(index, date);
