@@ -4,7 +4,7 @@
 
 	<groupId>org.azkfw</groupId>
 	<artifactId>azuki-business-test</artifactId>
-	<version>1.4.5-SNAPSHOT</version>
+	<version>1.4.5</version>
 	<packaging>jar</packaging>
 
 	<name>azuki-business-test</name>
