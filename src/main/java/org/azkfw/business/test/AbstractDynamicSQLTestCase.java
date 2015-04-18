@@ -26,6 +26,7 @@ import java.util.Map;
 import org.azkfw.business.dao.DataAccessServiceException;
 import org.azkfw.business.dao.DynamicSQLAccessObject;
 import org.azkfw.dsql.DynamicSQL;
+import org.azkfw.dsql.DynamicSQLManager;
 import org.azkfw.dsql.Group;
 import org.azkfw.dsql.Parameter;
 import org.azkfw.persistence.database.DatabaseConnection;
@@ -241,7 +242,7 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 	}
 
 	private long doCount(final Group group, final Parameter parameter) {
-		DynamicSQL dsql = DynamicSQL.generate(dynamicSQLName, group, parameter);
+		DynamicSQL dsql = DynamicSQLManager.generate(dynamicSQLName, group, parameter);
 		assertNotNull("Undefined DynamicSQL.[" + dynamicSQLName + "]", dsql);
 
 		Connection connection = null;
@@ -255,11 +256,11 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 
 			result = dao.count();
 
-			sqls.add(dsql.getSQL());
+			sqls.add(dsql.getExecuteSQL());
 
 		} catch (DataAccessServiceException ex) {
 			fatal(ex);
-			fail(String.format("DynamicSQL count error.[%s]", dsql.getSQL()));
+			fail(String.format("DynamicSQL count error.[%s]", dsql.getExecuteSQL()));
 		} finally {
 			releaseConnection(connection);
 		}
@@ -267,7 +268,7 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 	}
 
 	private List<Map<String, Object>> doQuery(final Group group, final Parameter parameter) {
-		DynamicSQL dsql = DynamicSQL.generate(dynamicSQLName, group, parameter);
+		DynamicSQL dsql = DynamicSQLManager.generate(dynamicSQLName, group, parameter);
 		assertNotNull("Undefined DynamicSQL.[" + dynamicSQLName + "]", dsql);
 
 		Connection connection = null;
@@ -281,11 +282,11 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 
 			records = dao.query();
 
-			sqls.add(dsql.getSQL());
+			sqls.add(dsql.getExecuteSQL());
 
 		} catch (DataAccessServiceException ex) {
 			fatal(ex);
-			fail(String.format("DynamicSQL query error.[%s]", dsql.getSQL()));
+			fail(String.format("DynamicSQL query error.[%s]", dsql.getExecuteSQL()));
 		} finally {
 			releaseConnection(connection);
 		}
@@ -293,7 +294,7 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 	}
 
 	private boolean doExecute(final Group group, final Parameter parameter) {
-		DynamicSQL dsql = DynamicSQL.generate(dynamicSQLName, group, parameter);
+		DynamicSQL dsql = DynamicSQLManager.generate(dynamicSQLName, group, parameter);
 		assertNotNull("Undefined DynamicSQL.[" + dynamicSQLName + "]", dsql);
 
 		Connection connection = null;
@@ -307,11 +308,11 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 
 			result = dao.execute();
 
-			sqls.add(dsql.getSQL());
+			sqls.add(dsql.getExecuteSQL());
 
 		} catch (DataAccessServiceException ex) {
 			fatal(ex);
-			fail(String.format("DynamicSQL execute error.[%s]", dsql.getSQL()));
+			fail(String.format("DynamicSQL execute error.[%s]", dsql.getExecuteSQL()));
 		} finally {
 			releaseConnection(connection);
 		}
@@ -319,7 +320,7 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 	}
 
 	private int doUpdate(final Group group, final Parameter parameter) {
-		DynamicSQL dsql = DynamicSQL.generate(dynamicSQLName, group, parameter);
+		DynamicSQL dsql = DynamicSQLManager.generate(dynamicSQLName, group, parameter);
 		assertNotNull("Undefined DynamicSQL.[" + dynamicSQLName + "]", dsql);
 
 		Connection connection = null;
@@ -333,11 +334,11 @@ public class AbstractDynamicSQLTestCase extends AbstractDatasourceTestCase {
 
 			result = dao.update();
 
-			sqls.add(dsql.getSQL());
+			sqls.add(dsql.getExecuteSQL());
 
 		} catch (DataAccessServiceException ex) {
 			fatal(ex);
-			fail(String.format("DynamicSQL update error.[%s]", dsql.getSQL()));
+			fail(String.format("DynamicSQL update error.[%s]", dsql.getExecuteSQL()));
 		} finally {
 			releaseConnection(connection);
 		}

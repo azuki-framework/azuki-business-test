@@ -4,7 +4,7 @@
 
 	<groupId>org.azkfw</groupId>
 	<artifactId>azuki-business-test</artifactId>
-	<version>1.4.5</version>
+	<version>1.5.0</version>
 	<packaging>jar</packaging>
 
 	<name>azuki-business-test</name>
@@ -38,13 +38,13 @@
 		<dependency>
 			<groupId>org.azkfw</groupId>
 			<artifactId>azuki-business</artifactId>
-			<version>1.4.5</version>
+			<version>1.5.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.azkfw</groupId>
 			<artifactId>azuki-datasource</artifactId>
-			<version>1.4.4</version>
+			<version>1.5.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.azkfw</groupId>
