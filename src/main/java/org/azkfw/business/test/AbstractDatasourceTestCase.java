@@ -34,7 +34,7 @@ import org.azkfw.datasource.Field;
 import org.azkfw.datasource.FieldType;
 import org.azkfw.datasource.Record;
 import org.azkfw.datasource.Table;
-import org.azkfw.datasource.excel.ExcelDatasourceFactory;
+import org.azkfw.datasource.excel.ExcelDatasourceBuilder;
 import org.azkfw.util.StringUtility;
 
 /**
@@ -114,7 +114,9 @@ public class AbstractDatasourceTestCase extends AbstractDatabaseTestCase {
 		try {
 			InputStream is = getTestContext().getResourceAsStream(name);
 			if (null != is) {
-				ds = ExcelDatasourceFactory.generate(name, is);
+				ExcelDatasourceBuilder builder = ExcelDatasourceBuilder.newInstance(name);
+				builder.addInputStream(is);
+				ds = builder.build();
 			} else {
 				fatal(String.format("Not found datasource file.[%s]", name));
 				fail(String.format("Not found datasource file.[%s]", name));
